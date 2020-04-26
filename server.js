@@ -37,7 +37,7 @@ start = () => {
                 type: "list",
                 message: "What would you like to do? ",
                 name: "option",
-                choices: ["Add", "View", "Update"]
+                choices: ["Add", "View", "Update", "exit"]
             }
         ]
     ).then(answer => {
@@ -54,13 +54,13 @@ start = () => {
 
             ])
                 .then(add => {
-                    if(add.add == "Departments"){
+                    if (add.add == "Departments") {
                         console.log("Added department");
                     }
-                    else if(add.add == "Roles"){
+                    else if (add.add == "Roles") {
                         console.log("Added Roles");
                     }
-                    else{
+                    else {
                         console.log("Added employees")
                     }
                 })
@@ -86,14 +86,42 @@ start = () => {
                 }
             ])
                 .then(view => {
-                    if(view.view == "Departments"){
+                    if (view.view == "Departments") {
                         console.log("Viewing department");
+                        displayDepartments();
                     }
-                    else if(view.view == "Roles"){
+                    else if (view.view == "Roles") {
                         console.log("Viewing Roles");
+                        displayRoles();
                     }
-                    else{
+                    else {
                         console.log("Viewing employees")
+                        displayEmployee();
+                    }
+                })
+                .catch(error => {
+                    if (error.isTtyError) {
+                        // Prompt couldn't be rendered in the current environment
+                    } else {
+                        // Something else when wrong
+                    }
+                });
+        }
+        else if (answer.option == "Update") {
+            console.log(`you have chosen to ${answer.option}`)
+            inquirer.prompt([
+                {
+                    type: "confirm",
+                    message: "Would you like to update an employee role? ",
+                    name: "update",
+                }
+            ])
+                .then(update => {
+                    if (update.update == true) {
+                        console.log("Lets update an employee")
+                    }
+                    else {
+
                     }
                 })
                 .catch(error => {
@@ -105,30 +133,78 @@ start = () => {
                 });
         }
         else {
-            console.log(`you have chosen to ${answer.option}`)
-            inquirer.prompt([
-                {
-                    type: "confirm",
-                    message: "Would you like to update an employee role? ",
-                    name: "update",
-                }
-            ])
-                .then(update => {
-                    if(update.update == true){
-                        console.log("Lets update an employee")
-                    }
-                    else{
-                        console.log("Good bye!!")
-                        connection.end()
-                    }
-                })
-                .catch(error => {
-                    if (error.isTtyError) {
-                        // Prompt couldn't be rendered in the current environment
-                    } else {
-                        // Something else when wrong
-                    }
-                });
+            console.log("Good bye!!")
+            connection.end()
         }
     })
+}
+
+// ==============================================================================================
+// functions for viewing 
+displayEmployee = () => {
+    connection.query("SELECT employee.first_name, employee.last_name, roles.title,roles.salary, department.name \
+                     FROM employee \
+                     INNER JOIN roles ON employee.role_id = roles.id \
+                     INNER JOIN department ON roles.department_id = department.id ", function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        console.log("=====================================================================================")
+
+    });
+    start()
+}
+displayRoles = () => {
+    connection.query("SELECT roles.title FROM roles", function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        console.log("=====================================================================================")
+    });
+}
+displayDepartments = () => {
+    connection.query("SELECT department.name FROM department", function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        console.log("=====================================================================================")
+    });
+}
+
+// ==============================================================================================
+// functions for adding 
+addEmployee = () => {
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "firstname",
+            message: "What is the employee's first name? "
+        },
+        {
+            type: "input",
+            name: "lastname",
+            message: "What is the employee's last name? "
+        },
+        {
+            type: "input",
+            name: "depart",
+            message: "What is the employee's department? "
+        },
+        // uses prompt answers to insert new item into auctions
+    ]).then(response => {
+        connection.query("INSERT INTO auctions SET ?",
+            {
+                // left siede is the auction columns, right side is the prompt answers
+                item_name: response.part,
+                category: "automotive",
+                starting_bid: response.starting_bid,
+                highest_bid: response.starting_bid,
+            },
+            function (err, res) {
+                if (err) throw err;
+                console.log("=====================================================================================")
+                readAuction();
+            }
+        )
+        // goAgain()
+    })
+
+
 }
