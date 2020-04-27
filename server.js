@@ -56,12 +56,16 @@ start = () => {
                 .then(add => {
                     if (add.add == "Departments") {
                         console.log("Added department");
+                        addDepartment();
                     }
                     else if (add.add == "Roles") {
                         console.log("Added Roles");
+                        addRole();
                     }
                     else {
-                        console.log("Added employees")
+                        console.log("Adding an employee")
+                        addEmployee();
+
                     }
                 })
                 .catch(error => {
@@ -142,7 +146,7 @@ start = () => {
 // ==============================================================================================
 // functions for viewing 
 displayEmployee = () => {
-    connection.query("SELECT employee.first_name, employee.last_name, roles.title,roles.salary, department.name \
+    connection.query("SELECT employee.first_name, employee.last_name, roles.title,roles.salary, department.department \
                      FROM employee \
                      INNER JOIN roles ON employee.role_id = roles.id \
                      INNER JOIN department ON roles.department_id = department.id ", function (err, res) {
@@ -154,14 +158,14 @@ displayEmployee = () => {
     start()
 }
 displayRoles = () => {
-    connection.query("SELECT roles.title FROM roles", function (err, res) {
+    connection.query("SELECT roles.title, roles.salary FROM roles", function (err, res) {
         if (err) throw err;
         console.table(res);
         console.log("=====================================================================================")
     });
 }
 displayDepartments = () => {
-    connection.query("SELECT department.name FROM department", function (err, res) {
+    connection.query("SELECT department.department FROM department", function (err, res) {
         if (err) throw err;
         console.table(res);
         console.log("=====================================================================================")
@@ -171,6 +175,7 @@ displayDepartments = () => {
 // ==============================================================================================
 // functions for adding 
 addEmployee = () => {
+    
     inquirer.prompt([
         {
             type: "input",
@@ -183,28 +188,115 @@ addEmployee = () => {
             message: "What is the employee's last name? "
         },
         {
+            type: "list",
+            name: "role",
+            message: "What is the employee's role? ",
+            choices: ["developer", "accountant"]
+        },
+
+        {
             type: "input",
             name: "depart",
             message: "What is the employee's department? "
         },
+
         // uses prompt answers to insert new item into auctions
     ]).then(response => {
-        connection.query("INSERT INTO auctions SET ?",
+        // adding employee's name
+        connection.query("INSERT INTO employee SET ?",
             {
-                // left siede is the auction columns, right side is the prompt answers
-                item_name: response.part,
-                category: "automotive",
-                starting_bid: response.starting_bid,
-                highest_bid: response.starting_bid,
-            },
-            function (err, res) {
+                // left side is the table columns, right side is the prompt answers
+                first_name: response.firstname,
+                last_name: response.lastname,
+                role_id: 1,
+
+            }, function (err, res) {
                 if (err) throw err;
                 console.log("=====================================================================================")
-                readAuction();
-            }
-        )
+
+            })
+        // adding employee's role
+        connection.query("INSERT INTO roles SET ?",
+            {
+                // left side is the table columns, right side is the prompt answers
+                title: response.role,
+                salary: response.pay,
+                department_id: 2,
+
+            }, function (err, res) {
+                if (err) throw err;
+                console.log("=====================================================================================")
+
+            })
+        // adding employee's department
+        connection.query("INSERT INTO department SET ?",
+            {
+                // left side is the table columns, right side is the prompt answers
+                department: response.depart,
+
+
+            }, function (err, res) {
+                if (err) throw err;
+                console.log("=====================================================================================")
+                displayEmployee();
+            })
+
+
         // goAgain()
     })
-
-
 }
+    // adding a department
+    addDepartment = () => {
+        inquirer.prompt([
+            {
+                type: "input",
+                name: "department",
+                message: "What is the department name? "
+            },
+
+            // uses prompt answers to insert new item into auctions
+        ]).then(response => {
+            connection.query("INSERT INTO department SET ?",
+                {
+                    // left side is the table columns, right side is the prompt answers
+                    department: response.department,
+
+
+                }, function (err, res) {
+                    if (err) throw err;
+                    console.log("=====================================================================================")
+                    displayDepartments()
+                })
+        })
+    }
+
+    // adding a new Role
+    addRole = () => {
+        inquirer.prompt([
+            {
+                type: "input",
+                name: "title",
+                message: "What is the role title? "
+            },
+            {
+                type: "input",
+                name: "salary",
+                message: "What is the role salary? "
+            },
+
+            // uses prompt answers to insert new item into auctions
+        ]).then(response => {
+            connection.query("INSERT INTO roles SET ?",
+                {
+                    // left side is the table columns, right side is the prompt answers
+                    title: response.title,
+                    salary: response.salary
+
+
+                }, function (err, res) {
+                    if (err) throw err;
+                    console.log("=====================================================================================")
+                    displayRoles()
+                })
+        })
+    }
