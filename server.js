@@ -302,7 +302,6 @@ updateEmployee = () => {
 
         ]).then(next => {    //storing employee prompt answer in next
 
-            console.log(next)
             // selecting list of roles and returning the id number
             connection.query("SELECT * FROM roles", function (errOne, resOne) {
                 if (errOne) throw errOne;
@@ -319,7 +318,7 @@ updateEmployee = () => {
                         })
                     },
                 ]).then(updatePrompt => {  //storing answer from role prompt and storing in updatePrompt
-                    console.log(updatePrompt)
+                    
                     // using the values of next/updatePrompt to update the employee columns
                     connection.query(
                         `UPDATE employee \
