@@ -67,15 +67,8 @@ start = () => {
                         addEmployee();
 
                     }
-                })
-                .catch(error => {
-                    if (error.isTtyError) {
-                        // Prompt couldn't be rendered in the current environment
-                    } else {
-                        // Something else when wrong
-                    }
-                });
 
+                })
         }
         else if (answer.option == "View") {
             console.log(`you have chosen to ${answer.option}`)
@@ -103,13 +96,6 @@ start = () => {
                         displayEmployee();
                     }
                 })
-                .catch(error => {
-                    if (error.isTtyError) {
-                        // Prompt couldn't be rendered in the current environment
-                    } else {
-                        // Something else when wrong
-                    }
-                });
         }
         else if (answer.option == "Update") {
             console.log(`you have chosen to ${answer.option}`)
@@ -127,16 +113,8 @@ start = () => {
                     }
                     else {
                         start();
-
                     }
                 })
-                .catch(error => {
-                    if (error.isTtyError) {
-                        // Prompt couldn't be rendered in the current environment
-                    } else {
-                        // Something else when wrong
-                    }
-                });
         }
         else {
             console.log("Good bye!!")
@@ -149,7 +127,7 @@ start = () => {
 // functions for viewing 
 displayEmployee = () => {
     connection.query(
-        "SELECT employee.first_name, employee.last_name, employee.role_id, roles.title, roles.salary, department.department \
+        "SELECT employee.first_name, employee.last_name, roles.title, roles.salary, department.department \
         FROM employee \
         INNER JOIN roles ON employee.role_id = roles.id \
         INNER JOIN department ON roles.department_id = department.id "
@@ -158,7 +136,7 @@ displayEmployee = () => {
             console.table(res);
             console.log("=====================================================================================")
         });
-    start()
+    start();
 }
 displayRoles = () => {
     connection.query(
@@ -170,7 +148,7 @@ displayRoles = () => {
             console.table(res);
             console.log("=====================================================================================")
         });
-    start()
+    start();
 }
 displayDepartments = () => {
     connection.query("SELECT * FROM department", function (err, res) {
@@ -178,7 +156,7 @@ displayDepartments = () => {
         console.table(res);
         console.log("=====================================================================================")
     });
-    start()
+    start();
 }
 
 // ==============================================================================================
@@ -226,6 +204,7 @@ addEmployee = () => {
                     console.log("=====================================================================================")
                     displayEmployee();
                 })
+            start();
         })
     })
 }
@@ -250,7 +229,7 @@ addDepartment = () => {
                 console.log("=====================================================================================")
                 displayDepartments()
             })
-        start()
+        start();
     })
 }
 
@@ -295,7 +274,7 @@ addRole = () => {
                     console.log("=====================================================================================")
                     displayRoles()
                 })
-            start()
+            start();
         })
     })
 }
@@ -303,6 +282,8 @@ addRole = () => {
 // ==============================================================================================
 // functions for updating employee role
 updateEmployee = () => {
+
+    // selecting list of roles and returning the id number
     connection.query("SELECT * FROM employee", function (errOne, resOne) {
         if (errOne) throw errOne;
         // console.log(resOne)
@@ -319,8 +300,10 @@ updateEmployee = () => {
                 })
             },
 
-        ]).then(next => {
+        ]).then(next => {    //storing employee prompt answer in next
+
             console.log(next)
+            // selecting list of roles and returning the id number
             connection.query("SELECT * FROM roles", function (errOne, resOne) {
                 if (errOne) throw errOne;
                 inquirer.prompt([
@@ -335,24 +318,25 @@ updateEmployee = () => {
                             }
                         })
                     },
-                ]).then(updatePrompt => {
+                ]).then(updatePrompt => {  //storing answer from role prompt and storing in updatePrompt
                     console.log(updatePrompt)
+                    // using the values of next/updatePrompt to update the employee columns
                     connection.query(
                         `UPDATE employee \
-                         SET  role_id = ${updatePrompt.new_role}\
+                         SET  role_id = ${updatePrompt.new_role}\ 
                          WHERE employee.id = ${next.employee}`,
 
                         function (errTwo, resTwo) {
                             if (errTwo) throw errTwo;
-                            displayEmployee();
                         }
                     );
-                    console.log("success!!")
-                })
-            })
-        })
-    })
-}
+                    displayEmployee();
+                    console.log("success!!");
+                });
+            });
+        });
+    });
+};
 
 
 
