@@ -123,8 +123,10 @@ start = () => {
                 .then(update => {
                     if (update.update == true) {
                         console.log("Lets update an employee")
+                        updateEmployee();
                     }
                     else {
+                        start();
 
                     }
                 })
@@ -146,142 +148,137 @@ start = () => {
 // ==============================================================================================
 // functions for viewing 
 displayEmployee = () => {
-    connection.query("SELECT employee.first_name, employee.last_name, roles.title,roles.salary, department.department \
-                     FROM employee \
-                     INNER JOIN roles ON employee.role_id = roles.id \
-                     INNER JOIN department ON roles.department_id = department.id ", function (err, res) {
-        if (err) throw err;
-        console.table(res);
-        console.log("=====================================================================================")
-
-    });
+    connection.query(
+        "SELECT employee.first_name, employee.last_name, employee.role_id, roles.title, roles.salary, department.department \
+        FROM employee \
+        INNER JOIN roles ON employee.role_id = roles.id \
+        INNER JOIN department ON roles.department_id = department.id "
+        , function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            console.log("=====================================================================================")
+        });
     start()
 }
 displayRoles = () => {
-    connection.query("SELECT roles.title, roles.salary FROM roles", function (err, res) {
-        if (err) throw err;
-        console.table(res);
-        console.log("=====================================================================================")
-    });
+    connection.query(
+        "SELECT roles.title, roles.salary, department.Department \
+        FROM roles \
+        INNER JOIN department ON roles.department_id = department.id"
+        , function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            console.log("=====================================================================================")
+        });
+    start()
 }
 displayDepartments = () => {
-    connection.query("SELECT department.department FROM department", function (err, res) {
+    connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
         console.table(res);
         console.log("=====================================================================================")
     });
+    start()
 }
 
 // ==============================================================================================
 // functions for adding 
 addEmployee = () => {
-    
-    inquirer.prompt([
-        {
-            type: "input",
-            name: "firstname",
-            message: "What is the employee's first name? "
-        },
-        {
-            type: "input",
-            name: "lastname",
-            message: "What is the employee's last name? "
-        },
-        {
-            type: "list",
-            name: "role",
-            message: "What is the employee's role? ",
-            choices: ["developer", "accountant"]
-        },
-
-        {
-            type: "input",
-            name: "depart",
-            message: "What is the employee's department? "
-        },
-
-        // uses prompt answers to insert new item into auctions
-    ]).then(response => {
-        // adding employee's name
-        connection.query("INSERT INTO employee SET ?",
-            {
-                // left side is the table columns, right side is the prompt answers
-                first_name: response.firstname,
-                last_name: response.lastname,
-                role_id: 1,
-
-            }, function (err, res) {
-                if (err) throw err;
-                console.log("=====================================================================================")
-
-            })
-        // adding employee's role
-        connection.query("INSERT INTO roles SET ?",
-            {
-                // left side is the table columns, right side is the prompt answers
-                title: response.role,
-                salary: response.pay,
-                department_id: 2,
-
-            }, function (err, res) {
-                if (err) throw err;
-                console.log("=====================================================================================")
-
-            })
-        // adding employee's department
-        connection.query("INSERT INTO department SET ?",
-            {
-                // left side is the table columns, right side is the prompt answers
-                department: response.depart,
-
-
-            }, function (err, res) {
-                if (err) throw err;
-                console.log("=====================================================================================")
-                displayEmployee();
-            })
-
-
-        // goAgain()
-    })
-}
-    // adding a department
-    addDepartment = () => {
+    connection.query("SELECT * FROM roles", function (errOne, resOne) {
+        if (errOne) throw errOne;
         inquirer.prompt([
             {
                 type: "input",
-                name: "department",
-                message: "What is the department name? "
+                name: "firstname",
+                message: "What is the employee's first name? "
             },
+            {
+                type: "input",
+                name: "lastname",
+                message: "What is the employee's last name? "
+            },
+            {
+                type: "list",
+                name: "role",
+                message: "What is the employee's role? ",
+                // lists the current roles for user selection
+                // and returns the corresponding ID number
+                choices: resOne.map(roles => {
+                    return {
+                        name: roles.title,
+                        value: roles.id,
+                    }
+                })
 
+            }
             // uses prompt answers to insert new item into auctions
         ]).then(response => {
-            connection.query("INSERT INTO department SET ?",
+            // adding employee's name
+            connection.query("INSERT INTO employee SET ?",
                 {
                     // left side is the table columns, right side is the prompt answers
-                    department: response.department,
-
+                    first_name: response.firstname,
+                    last_name: response.lastname,
+                    role_id: response.role,
 
                 }, function (err, res) {
                     if (err) throw err;
                     console.log("=====================================================================================")
-                    displayDepartments()
+                    displayEmployee();
                 })
         })
-    }
+    })
+}
+// adding a department
+addDepartment = () => {
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "department",
+            message: "What is the department name? "
+        },
 
-    // adding a new Role
-    addRole = () => {
+        // uses prompt answers to insert new item into auctions
+    ]).then(response => {
+        connection.query("INSERT INTO department SET ?",
+            {
+                // left side is the table columns, right side is the prompt answers
+                department: response.department,
+
+            }, function (err, res) {
+                if (err) throw err;
+                console.log("=====================================================================================")
+                displayDepartments()
+            })
+        start()
+    })
+}
+
+// adding a new Role
+addRole = () => {
+    connection.query("SELECT * FROM department", function (errOne, resOne) {
+        if (errOne) throw errOne;
         inquirer.prompt([
             {
                 type: "input",
                 name: "title",
-                message: "What is the role title? "
+                message: "What is the role's title? "
             },
             {
                 type: "input",
                 name: "salary",
-                message: "What is the role salary? "
+                message: "What is the role's salary? "
+            },
+            {
+                type: "list",
+                name: "department",
+                message: "What is the role's department? ",
+                choices: resOne.map(department => {
+                    return {
+                        name: department.Department,
+                        value: department.id
+                    }
+                })
             },
 
             // uses prompt answers to insert new item into auctions
@@ -290,13 +287,74 @@ addEmployee = () => {
                 {
                     // left side is the table columns, right side is the prompt answers
                     title: response.title,
-                    salary: response.salary
-
+                    salary: response.salary,
+                    department_id: response.department,
 
                 }, function (err, res) {
                     if (err) throw err;
                     console.log("=====================================================================================")
                     displayRoles()
                 })
+            start()
         })
-    }
+    })
+}
+
+// ==============================================================================================
+// functions for updating employee role
+updateEmployee = () => {
+    connection.query("SELECT * FROM employee", function (errOne, resOne) {
+        if (errOne) throw errOne;
+        // console.log(resOne)
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "employee",
+                message: "Who's role would you like to update? ",
+                choices: resOne.map(employee => {
+                    return {
+                        name: employee.first_name,
+                        value: employee.id,
+                    }
+                })
+            },
+
+        ]).then(next => {
+            console.log(next)
+            connection.query("SELECT * FROM roles", function (errOne, resOne) {
+                if (errOne) throw errOne;
+                inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "new_role",
+                        message: "what is the employee's new role?",
+                        choices: resOne.map(roles => {
+                            return {
+                                name: roles.title,
+                                value: roles.id,
+                            }
+                        })
+                    },
+                ]).then(updatePrompt => {
+                    console.log(updatePrompt)
+                    connection.query(
+                        `UPDATE employee \
+                         SET  role_id = ${updatePrompt.new_role}\
+                         WHERE employee.id = ${next.employee}`,
+
+                        function (errTwo, resTwo) {
+                            if (errTwo) throw errTwo;
+                            displayEmployee();
+                        }
+                    );
+                    console.log("success!!")
+                })
+            })
+        })
+    })
+}
+
+
+
+
+
