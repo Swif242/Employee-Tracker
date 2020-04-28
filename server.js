@@ -299,7 +299,6 @@ updateEmployee = () => {
                     }
                 })
             },
-
         ]).then(next => {    //storing employee prompt answer in next
 
             // selecting list of roles and returning the id number
